@@ -61,7 +61,7 @@ jobs:
           JF_URL: https://${{ vars.JF_URL }}/
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JF_GIT_BASE_BRANCH: ${{ github.event.pull_request.base.ref || 'master' }}
-          JF_INSTALL_DEPS_CMD: "jf npm install"
+          JF_INSTALL_DEPS_CMD: "jf npm install --legacy-peer-deps"
           JF_SCAN: "sca"
           JF_GIT_AGGREGATE_FIXES: "FALSE"
           JF_FIXABLE_ONLY: "TRUE"
@@ -75,7 +75,7 @@ jobs:
           JF_URL: https://${{ vars.JF_URL }}/
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JF_GIT_BASE_BRANCH: ${{ github.event.pull_request.base.ref || 'master' }}
-          JF_INSTALL_DEPS_CMD: "jf npm install"
+          JF_INSTALL_DEPS_CMD: "jf npm install --legacy-peer-deps"
           JF_SCAN: "sca"
           JF_GIT_AGGREGATE_FIXES: "TRUE"
           JF_FIXABLE_ONLY: "TRUE"
