@@ -23,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Node.js 22 (required for juice-shop dependencies)
+      # Set up Node.js 22 (required by juice-shop dependencies)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -46,15 +46,40 @@ jobs:
       - name: Configure npm for Artifactory
         run: jf npmc --repo-resolve steffes-gh-npm
 
-      # Install npm dependencies (resolved through Artifactory)
-      - name: Install npm dependencies
+      # Install root npm dependencies (resolved through Artifactory)
+      - name: Install root npm dependencies
         run: jf npm install
 
-      # Run Xray audit scan (SCA, SAST, licenses, secrets)
+      # Install frontend npm dependencies (resolved through Artifactory)
+      - name: Install frontend npm dependencies
+        run: |
+          cd frontend
+          jf npm install --legacy-peer-deps
+          cd ..
+
+      # Build frontend (if required)
+      - name: Build frontend
+        run: npm run build:frontend
+
+      # Run Xray Advanced Security scan (SCA, SAST, License, Secrets)
       - name: Xray Advanced Security Scan
         run: jf audit --watches="AnyBuildWatch"
 
-      # Frogbot - Create Separate PRs for Dependency Fixes
+      # Frogbot - SAST PR Comments
+      - name: Frogbot - SAST PR Comments
+        uses: jfrog/frogbot@v2
+        env:
+          JF_URL: https://${{ vars.JF_URL }}/
+          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JF_GIT_BASE_BRANCH: ${{ github.event.pull_request.base.ref || 'master' }}
+          JF_INSTALL_DEPS_CMD: "jf npm install"
+          JF_SCAN: "sast"
+          JF_FAIL: "TRUE"
+          JF_INCLUDE_ALL_VULNERABILITIES: "TRUE"
+        with:
+          oidc-provider-name: frogbot
+
+      # Frogbot - SCA Fix PRs (Separate)
       - name: Frogbot - SCA Fix PRs (Separate)
         uses: jfrog/frogbot@v2
         env:
@@ -68,7 +93,7 @@ jobs:
         with:
           oidc-provider-name: frogbot
 
-      # Frogbot - Create Aggregated PR for Dependency Fixes
+      # Frogbot - SCA Fix PR (Aggregated)
       - name: Frogbot - SCA Fix PR (Aggregated)
         uses: jfrog/frogbot@v2
         env:
@@ -79,18 +104,5 @@ jobs:
           JF_SCAN: "sca"
           JF_GIT_AGGREGATE_FIXES: "TRUE"
           JF_FIXABLE_ONLY: "TRUE"
-        with:
-          oidc-provider-name: frogbot
-      # Frogbot - SAST Scan PR Comments
-      - name: Frogbot - SAST PR Comments
-        uses: jfrog/frogbot@v2
-        env:
-          JF_URL: https://${{ vars.JF_URL }}/
-          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JF_GIT_BASE_BRANCH: ${{ github.event.pull_request.base.ref || 'master' }}
-          JF_INSTALL_DEPS_CMD: "jf npm install"
-          JF_SCAN: "sast"
-          JF_FAIL: "TRUE"                  # Fail workflow on SAST issues
-          JF_INCLUDE_ALL_VULNERABILITIES: "TRUE" # Show existing issues too
         with:
           oidc-provider-name: frogbot
