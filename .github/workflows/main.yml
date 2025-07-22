@@ -27,9 +27,8 @@ jobs:
         with:
           node-version: '22'
 
-      - uses: jfrog/setup-jfrog-cli@v4
-        id: setup-cli
-        name: Setup JFrog CLI
+      - name: Set up JFrog CLI with OIDC
+        uses: jfrog/setup-jfrog-cli@v4
         env:
           JF_URL: https://${{ vars.JF_URL }}/
         with:
@@ -55,7 +54,7 @@ jobs:
       - name: Xray Advanced Security Scan
         run: jf audit --watches="AnyBuildWatch"
 
-      # Frogbot - SCA Fix PRs
+      # Frogbot - SCA Fix PRs (Separate)
       - name: Frogbot - SCA Fix PRs (Separate)
         uses: jfrog/frogbot@v2
         env:
@@ -70,4 +69,15 @@ jobs:
           oidc-provider-name: frogbot
 
       # Frogbot - SCA Fix PR (Aggregated)
-      - name: Frogbot - SCA Fix
+      - name: Frogbot - SCA Fix PR (Aggregated)
+        uses: jfrog/frogbot@v2
+        env:
+          JF_URL: https://${{ vars.JF_URL }}/
+          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JF_GIT_BASE_BRANCH: ${{ github.event.pull_request.base.ref || 'master' }}
+          JF_INSTALL_DEPS_CMD: "jf npm install"
+          JF_SCAN: "sca"
+          JF_GIT_AGGREGATE_FIXES: "TRUE"
+          JF_FIXABLE_ONLY: "TRUE"
+        with:
+          oidc-provider-name: frogbot
