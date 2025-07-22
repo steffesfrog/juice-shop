@@ -33,6 +33,11 @@ jobs:
     - name: Configure npm for Artifactory
       run: jf npmc --repo-resolve steffes-gh-npm
 
+    # Patch postinstall script to use jf npm install
+    - name: Patch postinstall script
+      run: |
+        sed -i 's/npm install/jf npm install/g' package.json
+
     - name: Install project dependencies
       run: jf npm install
 
